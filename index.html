@@ -451,7 +451,7 @@
           if(Date.now()-redSince>2600){
             fighting=false; hookedFish="";
             hookedLength=0; hookedMass=0; fishStamina=1; fightPressure=1;
-            castOn=false; spoolClosed=false; lureLanded=false;
+            castOn=false; spoolClosed=false; lureLanded=false; lineDepthLimit=Infinity;
             $("state").textContent="线断了，鱼跑了";
             $("powerMeter").classList.remove("show");
             $("rodView").classList.remove("bent","lifted");
@@ -499,6 +499,7 @@
       fightPressure=1;
       distance=0;
       depth=0;
+      lineDepthLimit=Infinity;
       targetDistance=0;
       $("line").classList.remove("out");
       $("line").style.width="0";
@@ -624,7 +625,7 @@
         $("rodView").classList.add("lifted");
         if(suspend()){
           approachDepth(Math.max(.15, suspendDepth(activeLure())-.25), .045);
-          depth=Math.min(depth,maxDepthHere());
+          depth=Math.min(depth,passiveDepthLimit());
           updateLabels();
         }else if(!surface()){
           depth=Math.max(0,depth-.12);
@@ -644,7 +645,7 @@
       clearInterval(reelTimer);
     }
     ["pointerup","pointercancel","pointerleave"].forEach(ev=>$("go").addEventListener(ev,stopMouseReel));
-    window.addEventListener("deviceorientation",e=>{ if(!castOn||!e.beta)return; if(e.beta<25){$("rodView").classList.add("lifted"); if(suspend()){approachDepth(Math.max(.15,suspendDepth(activeLure())-.25),.045); depth=Math.min(depth,maxDepthHere()); updateLabels();}else if(!surface()){depth=Math.max(0,depth-.12); updateLabels();}} else $("rodView").classList.remove("lifted");});
+    window.addEventListener("deviceorientation",e=>{ if(!castOn||!e.beta)return; if(e.beta<25){$("rodView").classList.add("lifted"); if(suspend()){approachDepth(Math.max(.15,suspendDepth(activeLure())-.25),.045); depth=Math.min(depth,passiveDepthLimit()); updateLabels();}else if(!surface()){depth=Math.max(0,depth-.12); updateLabels();}} else $("rodView").classList.remove("lifted");});
   </script>
 </body>
 </html>
