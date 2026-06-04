@@ -268,7 +268,7 @@
       "桥洞": [-140, 42],
       "城市河道": [-118, 52],
       "回湾": [-104, 58],
-      "桦尖": [-126, 48],
+      "桦尖": [-188, 64],
       "陡坎": [-116, 62],
       "码头区": [-156, 44]
     };
@@ -359,7 +359,17 @@
     function surface(){ const l=activeLure(); return l && (l.name==="波爬"||l.name==="之字狗"); }
     function suspend(){ const l=activeLure(); return l && (l.name==="米诺"||l.name==="小胖子"); }
     function weight(){ const lure = activeLure(); return Number(((lure && lure.weight) || "5g").replace("g","")); }
-    function lockLineDepth(){ lineDepthLimit=Math.max(.12, Math.min(maxDepthHere(), depth)); }
+    function lineDepthCapacity(){
+      const lure=activeLure();
+      const limit=maxDepthHere();
+      const w=weight();
+      if(surface())return .12;
+      if(lure.name==="铅头钩"||lure.name==="Senko")return Math.min(limit, Math.max(depth, 1.35 + w*.17));
+      if(lure.name==="VIB"||lure.name==="亮片")return Math.min(limit, Math.max(depth, .85 + w*.12));
+      if(suspend())return Math.min(limit, Math.max(depth, suspendDepth(lure)+.45));
+      return Math.min(limit, Math.max(depth, 1.1 + w*.1));
+    }
+    function lockLineDepth(){ lineDepthLimit=Math.max(.12, lineDepthCapacity()); }
     function passiveDepthLimit(){ return spoolClosed ? Math.min(maxDepthHere(), lineDepthLimit) : maxDepthHere(); }
     function reelInLineLimit(){ if(spoolClosed)lineDepthLimit=Math.min(lineDepthLimit, Math.max(.12, depth)); }
     function suspendDepth(lure){
@@ -379,8 +389,8 @@
       else depth=Math.max(target,depth-step);
     }
     function setupFish(){
-      const cfg=settings[spot]||settings["回湾"]; $("scene").className=`scene ${cfg[0]}`; active=0; distance=0; targetDistance=0; depth=0; lineDepthLimit=Infinity; castOn=false; spoolClosed=false; lureLanded=false; castQuality=1; biteHeat=0; spotAlbum={}; chargingCast=false; clearInterval(chargeTimer); $("castMeter").classList.remove("show"); $("line").classList.remove("out"); $("line").style.width="0"; $("currentLure").classList.remove("cast","flying"); $("currentLure").style.transform=""; $("splash").classList.remove("show"); $("rodView").classList.remove("casting","lifted","bent"); $("go").textContent="按住GO"; $("go").classList.remove("small","reeling"); $("state").textContent=`${spot} · 按住 GO 蓄力抛投`;
-      $("picker").innerHTML=""; lures.forEach((l,i)=>{ const b=document.createElement("button"); b.className=`fish-lure${i===0?" active":""}${l.lost?" lost":""}`; b.innerHTML=lureSvg(l.name)+`<span>${l.name}<br>${l.weight}${l.lost?"<br>×":""}</span>`; b.onclick=()=>{if(castOn||b.classList.contains("lost"))return; active=i; document.querySelectorAll(".fish-lure").forEach(x=>x.classList.remove("active")); b.classList.add("active"); $("currentLure").innerHTML=lureSvg(l.name); $("rodView").classList.add("lifted"); setTimeout(()=>$("rodView").classList.remove("lifted"),420);}; $("picker").appendChild(b); }); $("currentLure").innerHTML=lureSvg(activeLure().name); updateLabels(); clearInterval(sinkTimer); sinkTimer=setInterval(()=>{ if(!castOn||!lureLanded||snagged||$("go").classList.contains("reeling"))return; const lure=activeLure(); const passiveLimit=passiveDepthLimit(); if(surface()){updateLabels(); return;} if(suspend()){approachDepth(Math.min(suspendDepth(lure), passiveLimit), .022); depth=Math.min(depth,passiveLimit); updateLabels(); return;} depth=Math.min(passiveLimit,depth+0.032*weight()/5*Math.min(1.7,Math.max(.4,(Date.now()-castAt)/1000)/1.4)); updateLabels(); },140);
+      const cfg=settings[spot]||settings["回湾"]; $("scene").className=`scene ${cfg[0]}`; active=0; distance=0; targetDistance=0; depth=0; lineDepthLimit=Infinity; castOn=false; spoolClosed=false; lureLanded=false; castQuality=1; biteHeat=0; spotAlbum={}; chargingCast=false; clearInterval(chargeTimer); $("castMeter").classList.remove("show"); $("line").classList.remove("out"); $("line").style.width="0"; $("currentLure").classList.remove("cast","flying"); $("currentLure").style.transform=""; $("currentLure").style.opacity="1"; $("splash").classList.remove("show"); $("rodView").classList.remove("casting","lifted","bent"); $("go").textContent="按住GO"; $("go").classList.remove("small","reeling"); $("state").textContent=`${spot} · 按住 GO 蓄力抛投`;
+      $("picker").innerHTML=""; lures.forEach((l,i)=>{ const b=document.createElement("button"); b.className=`fish-lure${i===0?" active":""}${l.lost?" lost":""}`; b.innerHTML=lureSvg(l.name)+`<span>${l.name}<br>${l.weight}${l.lost?"<br>×":""}</span>`; b.onclick=()=>{if(castOn||b.classList.contains("lost"))return; active=i; document.querySelectorAll(".fish-lure").forEach(x=>x.classList.remove("active")); b.classList.add("active"); $("currentLure").innerHTML=lureSvg(l.name); $("rodView").classList.add("lifted"); setTimeout(()=>$("rodView").classList.remove("lifted"),420);}; $("picker").appendChild(b); }); $("currentLure").innerHTML=lureSvg(activeLure().name); updateLabels(); clearInterval(sinkTimer); sinkTimer=setInterval(()=>{ if(!castOn||!lureLanded||fighting||snagged||$("go").classList.contains("reeling"))return; const lure=activeLure(); const passiveLimit=passiveDepthLimit(); if(surface()){updateLabels(); return;} if(suspend()){approachDepth(Math.min(suspendDepth(lure), passiveLimit), .022); depth=Math.min(depth,passiveLimit); updateLabels(); return;} depth=Math.min(passiveLimit,depth+0.032*weight()/5*Math.min(1.7,Math.max(.4,(Date.now()-castAt)/1000)/1.4)); updateLabels(); },140);
     }
     function closeSpool(){
       if(!castOn||spoolClosed)return;
@@ -427,7 +437,7 @@
       if(castOn)return;
       castQuality=quality;
       biteHeat=0;
-      castOn=true; updateFishingLureButtons(); spoolClosed=false; lureLanded=false; lineDepthLimit=Infinity; castAt=Date.now(); targetDistance=weight()===5?22+Math.random()*8:weight()===10?34+Math.random()*10:48+Math.random()*12; if(activeLure().name==="亮片")targetDistance*=1.18; targetDistance*=.72+Math.max(0,Math.min(100,charge))/100*.72; distance=0; depth=0; $("rodView").classList.add("casting"); $("line").classList.add("out"); setLurePosition(0,true); $("splash").classList.remove("show"); $("state").textContent=quality>=1.05?"抛投不错，点击圆钮关闭线杯":charge<42?"抛得太近，落点偏岸边，点击圆钮关闭线杯":"抛得太远，落点偏离标点，点击圆钮关闭线杯"; $("go").textContent="关线杯"; $("go").classList.add("small"); setTimeout(()=>$("rodView").classList.remove("casting"),820); clearInterval(flightTimer); flightTimer=setInterval(()=>{ const progress=Math.min(1,(Date.now()-castAt)/900); distance=targetDistance*(1-Math.pow(1-progress,2)); setLurePosition(progress,true); if(progress>=1){ clearInterval(flightTimer); lureLanded=true; distance=targetDistance; depth=surface()?0:.15; if(spoolClosed)lockLineDepth(); setLurePosition(1,false); $("splash").classList.remove("show"); void $("splash").offsetWidth; $("splash").classList.add("show"); $("state").textContent=spoolClosed?"线杯已关闭，按住按钮收轮":"落水了，没关线杯会继续出线下沉"; } updateLabels(); },40); updateLabels();
+      castOn=true; updateFishingLureButtons(); spoolClosed=false; lureLanded=false; lineDepthLimit=Infinity; castAt=Date.now(); targetDistance=weight()===5?22+Math.random()*8:weight()===10?34+Math.random()*10:48+Math.random()*12; if(activeLure().name==="亮片")targetDistance*=1.18; targetDistance*=.72+Math.max(0,Math.min(100,charge))/100*.72; distance=0; depth=0; $("currentLure").style.opacity="1"; $("rodView").classList.add("casting"); $("line").classList.add("out"); setLurePosition(0,true); $("splash").classList.remove("show"); $("state").textContent=quality>=1.05?"抛投不错，点击圆钮关闭线杯":charge<42?"抛得太近，落点偏岸边，点击圆钮关闭线杯":"抛得太远，落点偏离标点，点击圆钮关闭线杯"; $("go").textContent="关线杯"; $("go").classList.add("small"); setTimeout(()=>$("rodView").classList.remove("casting"),820); clearInterval(flightTimer); flightTimer=setInterval(()=>{ const progress=Math.min(1,(Date.now()-castAt)/900); distance=targetDistance*(1-Math.pow(1-progress,2)); setLurePosition(progress,true); if(progress>=1){ clearInterval(flightTimer); lureLanded=true; distance=targetDistance; depth=surface()?0:.15; if(spoolClosed)lockLineDepth(); setLurePosition(1,false); $("splash").classList.remove("show"); void $("splash").offsetWidth; $("splash").classList.add("show"); $("state").textContent=spoolClosed?"线杯已关闭，按住按钮收轮":"落水了，没关线杯会继续出线下沉"; } updateLabels(); },40); updateLabels();
     }
     function tryEvent(){
       if(!castOn||!lureLanded||snagged)return;
@@ -505,6 +515,7 @@
       redSince=0;
       snagged="";
       $("state").textContent=`刺鱼！${hookedMass>3?"这鱼很重，":""}控住力度再收轮！`;
+      $("currentLure").style.opacity="0";
       $("rodView").classList.add("bent");
       $("powerMeter").classList.add("show");
       $("strikeLines").classList.remove("show");
@@ -549,7 +560,8 @@
             $("state").textContent="线断了，鱼跑了";
             $("powerMeter").classList.remove("show");
             $("rodView").classList.remove("bent","lifted");
-            $("go").textContent="GO";
+            $("currentLure").style.opacity="1";
+            $("go").textContent="按住GO";
             $("go").classList.remove("small","reeling");
             updateFishingLureButtons();
             clearInterval(fightTimer); clearInterval(reelTimer);
@@ -576,7 +588,7 @@
       if(buttons[active]){buttons[active].classList.add("lost"); buttons[active].innerHTML += "<br>×";}
       alert(`${lure.name} ${lure.weight} 挂丢了，这个饵不能用了`);
     }
-    function reel(){ if(!castOn||!spoolClosed||fighting)return; if(!snagged){ distance=Math.max(0,distance-.34); const lure=activeLure(); if(suspend())approachDepth(Math.min(runningDepth(lure),lineDepthLimit), lure.name==="小胖子"?.07:.05); else if(!surface())depth=Math.max(.1,depth-.038); depth=Math.min(depth,passiveDepthLimit()); reelInLineLimit(); } setLurePosition(targetDistance ? distance/targetDistance : 0,false); if(snagged==="bottom"&&Math.random()<.045){$("state").textContent="解挂成功，带上来一点杂物"; snagged=""; $("rodView").classList.remove("bent","lifted");} if(snagged==="grass"&&Math.random()<.06){$("state").textContent="水草抖掉了，可以继续收"; snagged=""; $("rodView").classList.remove("bent","lifted");} if(snagged==="bottom"&&Math.random()<.006){$("state").textContent="断了，这个饵不能用了"; markLureLost(); snagged=""; distance=0;} tryEvent(); if(distance<=0){castOn=false; updateFishingLureButtons(); spoolClosed=false; lureLanded=false; snagged=""; depth=0; lineDepthLimit=Infinity; $("line").classList.remove("out"); $("line").style.width="0"; $("currentLure").classList.remove("cast","flying"); $("currentLure").style.transform=""; $("go").textContent="按住GO"; $("go").classList.remove("small","reeling"); $("rodView").classList.remove("bent","lifted"); $("state").textContent="收回来了，可以重新按住 GO"; clearInterval(reelTimer); suppressNextClick=true; setTimeout(()=>{suppressNextClick=false;},250);} updateLabels(); }
+    function reel(){ if(!castOn||!spoolClosed||fighting)return; if(!snagged){ distance=Math.max(0,distance-.34); const lure=activeLure(); if(suspend())approachDepth(Math.min(runningDepth(lure),lineDepthLimit), lure.name==="小胖子"?.07:.05); else if(!surface())depth=Math.max(.1,depth-.038); depth=Math.min(depth,passiveDepthLimit()); reelInLineLimit(); } setLurePosition(targetDistance ? distance/targetDistance : 0,false); if(snagged==="bottom"&&Math.random()<.045){$("state").textContent="解挂成功，带上来一点杂物"; snagged=""; $("rodView").classList.remove("bent","lifted");} if(snagged==="grass"&&Math.random()<.06){$("state").textContent="水草抖掉了，可以继续收"; snagged=""; $("rodView").classList.remove("bent","lifted");} if(snagged==="bottom"&&Math.random()<.006){$("state").textContent="断了，这个饵不能用了"; markLureLost(); snagged=""; distance=0;} tryEvent(); if(distance<=0){castOn=false; updateFishingLureButtons(); spoolClosed=false; lureLanded=false; snagged=""; depth=0; lineDepthLimit=Infinity; $("line").classList.remove("out"); $("line").style.width="0"; $("currentLure").classList.remove("cast","flying"); $("currentLure").style.transform=""; $("currentLure").style.opacity="1"; $("go").textContent="按住GO"; $("go").classList.remove("small","reeling"); $("rodView").classList.remove("bent","lifted"); $("state").textContent="收回来了，可以重新按住 GO"; clearInterval(reelTimer); suppressNextClick=true; setTimeout(()=>{suppressNextClick=false;},250);} updateLabels(); }
     function resetFishing(){
       clearInterval(sinkTimer);
       clearInterval(reelTimer);
@@ -601,6 +613,7 @@
       $("line").style.width="0";
       $("currentLure").classList.remove("cast","flying");
       $("currentLure").style.transform="";
+      $("currentLure").style.opacity="1";
       $("splash").classList.remove("show");
       $("rodView").classList.remove("casting","lifted","bent");
       $("powerMeter").classList.remove("show");
