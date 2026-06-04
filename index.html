@@ -141,7 +141,7 @@
     .fish-photo svg { width: 180px; height: 110px; }
     .catch-card h2 { margin: 0 0 8px; font-size: 24px; }
     .catch-card p { margin: 5px 0; color: #456066; font-size: 14px; font-weight: 800; }
-    .catch-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+    .catch-actions { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 14px; }
     .catch-actions button { height: 44px; border: 2px solid #4fa6aa; border-radius: 22px; background: #fff7d6; color: #245d62; font-weight: 900; }
     @keyframes in { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes lock { from { opacity: 0; transform: scale(.84); } to { opacity: 1; transform: scale(1); } }
@@ -228,7 +228,6 @@
           <p id="catchInfo"></p>
           <p id="catchGear"></p>
           <div class="catch-actions">
-            <button id="saveCatch">保存图片</button>
             <button id="releaseFish">放流</button>
           </div>
         </article>
@@ -484,22 +483,6 @@
       $("tip").classList.remove("show");
       document.querySelectorAll(".spot").forEach(x=>x.classList.remove("active"));
       show("map");
-    };
-    $("saveCatch").onclick=()=>{
-      const canvas=document.createElement("canvas");
-      canvas.width=900; canvas.height=1200;
-      const ctx=canvas.getContext("2d");
-      ctx.fillStyle="#dff3f2"; ctx.fillRect(0,0,900,1200);
-      ctx.fillStyle="#fff7d6"; ctx.fillRect(80,90,740,1020);
-      ctx.strokeStyle="#4fa6aa"; ctx.lineWidth=10; ctx.strokeRect(80,90,740,1020);
-      ctx.fillStyle="#245d62"; ctx.font="bold 58px Arial"; ctx.fillText($("catchTitle").textContent,130,190);
-      ctx.font="bold 34px Arial"; ctx.fillText($("catchInfo").textContent,130,280);
-      ctx.fillText($("catchGear").textContent,130,340);
-      ctx.font="bold 44px Arial"; ctx.fillText("Lure Fishing Catch",130,1010);
-      const a=document.createElement("a");
-      a.download="lure-fishing-catch.png";
-      a.href=canvas.toDataURL("image/png");
-      a.click();
     };
     $("releaseFish").onclick=()=>{
       $("catchModal").classList.remove("show");
