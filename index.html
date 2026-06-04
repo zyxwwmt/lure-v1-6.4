@@ -120,9 +120,9 @@
     .reel { position: absolute; right: 91px; bottom: 93px; width: 48px; height: 48px; border: 4px solid #245d62; border-radius: 50%; background: radial-gradient(circle, #fff7d6 0 31%, #9bd7cf 33% 45%, #fff7d6 47%); box-shadow: 0 4px 0 rgba(36,93,98,.16); }
     .reel::before { content: ""; position: absolute; right: -25px; top: 18px; width: 30px; height: 8px; border: 3px solid #245d62; border-left: 0; border-radius: 0 12px 12px 0; background: #fff7d6; transform: rotate(-12deg); }
     .reel::after { content: ""; position: absolute; right: -34px; top: 10px; width: 13px; height: 13px; border: 3px solid #245d62; border-radius: 50%; background: #f0a14a; }
-    .line { position: absolute; left: 56px; top: 36px; width: 0; height: 2px; background: rgba(255,255,255,.8); transform: rotate(0deg); transform-origin: left center; transition: width .12s linear, transform .12s linear; }
-    .current-lure { position: absolute; left: 37px; top: 17px; z-index: 6; width: 38px; height: 38px; color: #245d62; transition: transform .12s linear; }
-    .splash { position: absolute; left: 24px; top: 17px; z-index: 5; width: 64px; height: 28px; display: none; border-radius: 50%; border: 3px solid rgba(255,255,255,.74); border-left-color: transparent; border-right-color: transparent; transform: translateX(-190px) translateY(66px) scale(.82); pointer-events: none; }
+    .line { position: absolute; left: 35px; top: 22px; width: 0; height: 2px; background: rgba(255,255,255,.8); transform: rotate(0deg); transform-origin: left center; transition: width .12s linear, transform .12s linear; }
+    .current-lure { position: absolute; left: 16px; top: 3px; z-index: 6; width: 38px; height: 38px; color: #245d62; transition: transform .12s linear; }
+    .splash { position: absolute; left: 3px; top: 3px; z-index: 5; width: 64px; height: 28px; display: none; border-radius: 50%; border: 3px solid rgba(255,255,255,.74); border-left-color: transparent; border-right-color: transparent; transform: translateX(-190px) translateY(66px) scale(.82); pointer-events: none; }
     .splash.show { display: block; animation: splash .55s ease-out both; }
     .go { position: absolute; left: 50%; bottom: 28px; z-index: 7; width: 84px; height: 84px; border: 4px solid #4fa6aa; border-radius: 42px; background: #fff7d6; color: #245d62; box-shadow: 0 8px 0 #9bd7cf; font-size: 24px; font-weight: 900; transform: translateX(-50%); touch-action: none; }
     .go.small { font-size: 14px; }
