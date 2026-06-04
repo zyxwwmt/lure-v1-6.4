@@ -334,7 +334,7 @@
       hookedMass=Number(size[1]);
       fightPressure=Math.max(.65, Math.min(5.6, hookedMass / rodStrength()));
       fighting=true;
-      power=Math.min(68, 24 + fightPressure * 7.5);
+      power=Math.min(58, 24 + fightPressure * 4.8);
       redSince=0;
       snagged="";
       $("state").textContent=`刺鱼！${hookedMass>3?"这鱼很重，":""}控住力度再收轮！`;
@@ -345,18 +345,30 @@
       $("strikeLines").classList.add("show");
       updatePower();
       clearInterval(fightTimer);
+      let swimUntil=0;
+      let swimDir=0;
+      let burst=0;
       fightTimer=setInterval(()=>{
         if(!fighting)return;
         const reeling=$("go").classList.contains("reeling");
+        const now=Date.now();
+        if(now>swimUntil){
+          const r=Math.random();
+          swimDir = r<.24 ? -1 : r<.58 ? 0 : 1;
+          burst = Math.random()<.18 ? 1 : 0;
+          swimUntil = now + 420 + Math.random()*760;
+        }
+        const runBase = .08 + fightPressure*.055;
+        const fishRun = swimDir*runBase + (burst && swimDir>=0 ? .18 + fightPressure*.055 : 0);
         if(reeling){
-          const pull=Math.max(.08, .52 * rodStrength() / Math.max(.85, hookedMass));
-          distance=Math.max(0,distance-pull);
+          const pull=Math.max(.32, .78 * rodStrength() / Math.sqrt(Math.max(.8, hookedMass)));
+          distance=Math.max(0,Math.min(targetDistance+18,distance + fishRun - pull));
           depth=Math.max(0,depth-.018 * rodStrength());
-          power+=.8 + fightPressure * 1.25;
+          power+=.55 + fightPressure*.92 + Math.max(0,fishRun)*2.2;
         }else{
-          distance=Math.min(targetDistance+18,distance+.1 + fightPressure*.08);
-          depth=Math.min(maxDepthHere(),depth+.018 + fightPressure*.014);
-          power=Math.max(18,power-(.85 + rodStrength()*.12));
+          distance=Math.max(0,Math.min(targetDistance+18,distance + fishRun));
+          depth=Math.max(0,Math.min(maxDepthHere(),depth + (Math.random()-.42)*(.04 + fightPressure*.015)));
+          power=Math.max(14,power-(1.1 + rodStrength()*.18));
         }
         setLurePosition(targetDistance ? Math.max(0,Math.min(1,distance/targetDistance)) : 0,false);
         if(power>72 && reeling){
