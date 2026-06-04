@@ -124,7 +124,7 @@
     .line { position: absolute; left: 35px; top: -5px; width: 0; height: 2px; background: rgba(255,255,255,.8); transform: rotate(0deg); transform-origin: left center; transition: width .12s linear, transform .12s linear; }
     .line::before { content: ""; position: absolute; left: -3px; top: -3px; width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,.95); box-shadow: 0 0 0 1px rgba(36,93,98,.26); }
     .current-lure { position: absolute; left: 16px; top: -24px; z-index: 6; width: 38px; height: 38px; color: #245d62; transition: transform .12s linear; }
-    .splash { position: absolute; left: 3px; top: -24px; z-index: 5; width: 64px; height: 28px; display: none; border-radius: 50%; border: 3px solid rgba(255,255,255,.74); border-left-color: transparent; border-right-color: transparent; transform: translateX(-190px) translateY(66px) scale(.82); pointer-events: none; }
+    .splash { position: absolute; left: 16px; top: -24px; z-index: 5; width: 64px; height: 28px; display: none; border-radius: 50%; border: 3px solid rgba(255,255,255,.74); border-left-color: transparent; border-right-color: transparent; transform: translate(-50%, -50%) scale(.82); pointer-events: none; }
     .splash.show { display: block; animation: splash .55s ease-out both; }
     .go { position: absolute; left: 50%; bottom: 28px; z-index: 7; width: 84px; height: 84px; border: 4px solid #4fa6aa; border-radius: 42px; background: #fff7d6; color: #245d62; box-shadow: 0 8px 0 #9bd7cf; font-size: 24px; font-weight: 900; transform: translateX(-50%); touch-action: none; }
     .go.small { font-size: 14px; }
@@ -152,7 +152,7 @@
     @keyframes van { from { left: 0; } to { left: calc(100% - 58px); } }
     @keyframes dark { from { opacity: 0; } to { opacity: 1; } }
     @keyframes cast { 0% { transform: rotate(0); } 42% { transform: rotate(22deg) translateX(12px); } 100% { transform: rotate(-8deg) translateX(-8px); } }
-    @keyframes splash { 0% { opacity: 0; transform: scale(.3); } 35% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(1.55); } }
+    @keyframes splash { 0% { opacity: 0; transform: translate(-50%, -50%) scale(.3); } 35% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 100% { opacity: 0; transform: translate(-50%, -50%) scale(1.55); } }
     @keyframes spin { from { transform: translateX(-50%) rotate(0deg); } to { transform: translateX(-50%) rotate(360deg); } }
     @keyframes shakeLine { from { transform: translateX(0) rotate(-8deg); opacity: .35; } to { transform: translateX(-5px) rotate(8deg); opacity: .8; } }
     @keyframes strikeFlash { 0% { opacity: 0; transform: scale(.92); } 40% { opacity: .85; } 100% { opacity: 0; transform: scale(1.08); } }
@@ -315,7 +315,8 @@
       const lineAngle = Math.atan2(y, x) * 180 / Math.PI;
       $("line").style.width = `${Math.max(0, lineLength)}px`;
       $("line").style.transform = `rotate(${lineAngle}deg)`;
-      $("splash").style.transform = `translateX(${landX}px) translateY(${landY + 18}px) scale(.72)`;
+      $("splash").style.left = `${16 + landX}px`;
+      $("splash").style.top = `${-24 + landY}px`;
     }
     function activeLure(){ return lures[active] || lures[0]; }
     function surface(){ const l=activeLure(); return l && (l.name==="波爬"||l.name==="之字狗"); }
@@ -323,6 +324,7 @@
     function weight(){ const lure = activeLure(); return Number(((lure && lure.weight) || "5g").replace("g","")); }
     function lockLineDepth(){ lineDepthLimit=Math.max(.12, Math.min(maxDepthHere(), depth)); }
     function passiveDepthLimit(){ return spoolClosed ? Math.min(maxDepthHere(), lineDepthLimit) : maxDepthHere(); }
+    function reelInLineLimit(){ if(spoolClosed)lineDepthLimit=Math.min(lineDepthLimit, Math.max(.12, depth)); }
     function suspendDepth(lure){
       const w=weight();
       const base = lure.name==="小胖子" ? 1.25 : .85;
@@ -341,7 +343,7 @@
     }
     function setupFish(){
       const cfg=settings[spot]||settings["回湾"]; $("scene").className=`scene ${cfg[0]}`; active=0; distance=0; targetDistance=0; depth=0; lineDepthLimit=Infinity; castOn=false; spoolClosed=false; lureLanded=false; $("line").classList.remove("out"); $("line").style.width="0"; $("currentLure").classList.remove("cast","flying"); $("currentLure").style.transform=""; $("splash").classList.remove("show"); $("rodView").classList.remove("casting","lifted","bent"); $("go").textContent="GO"; $("go").classList.remove("small","reeling"); $("state").textContent=`${spot} · 选饵后点击 GO`;
-      $("picker").innerHTML=""; lures.forEach((l,i)=>{ const b=document.createElement("button"); b.className=`fish-lure${i===0?" active":""}${l.lost?" lost":""}`; b.innerHTML=lureSvg(l.name)+`<span>${l.name}<br>${l.weight}${l.lost?"<br>×":""}</span>`; b.onclick=()=>{if(castOn||b.classList.contains("lost"))return; active=i; document.querySelectorAll(".fish-lure").forEach(x=>x.classList.remove("active")); b.classList.add("active"); $("currentLure").innerHTML=lureSvg(l.name); $("rodView").classList.add("lifted"); setTimeout(()=>$("rodView").classList.remove("lifted"),420);}; $("picker").appendChild(b); }); $("currentLure").innerHTML=lureSvg(activeLure().name); updateLabels(); clearInterval(sinkTimer); sinkTimer=setInterval(()=>{ if(!castOn||!lureLanded||snagged||$("go").classList.contains("reeling"))return; const lure=activeLure(); const passiveLimit=passiveDepthLimit(); if(surface()){updateLabels(); return;} if(suspend()){approachDepth(Math.min(suspendDepth(lure), passiveLimit), .028); depth=Math.min(depth,passiveLimit); updateLabels(); return;} depth=Math.min(passiveLimit,depth+0.055*weight()/5*Math.min(1.7,Math.max(.4,(Date.now()-castAt)/1000)/1.4)); updateLabels(); },140);
+      $("picker").innerHTML=""; lures.forEach((l,i)=>{ const b=document.createElement("button"); b.className=`fish-lure${i===0?" active":""}${l.lost?" lost":""}`; b.innerHTML=lureSvg(l.name)+`<span>${l.name}<br>${l.weight}${l.lost?"<br>×":""}</span>`; b.onclick=()=>{if(castOn||b.classList.contains("lost"))return; active=i; document.querySelectorAll(".fish-lure").forEach(x=>x.classList.remove("active")); b.classList.add("active"); $("currentLure").innerHTML=lureSvg(l.name); $("rodView").classList.add("lifted"); setTimeout(()=>$("rodView").classList.remove("lifted"),420);}; $("picker").appendChild(b); }); $("currentLure").innerHTML=lureSvg(activeLure().name); updateLabels(); clearInterval(sinkTimer); sinkTimer=setInterval(()=>{ if(!castOn||!lureLanded||snagged||$("go").classList.contains("reeling"))return; const lure=activeLure(); const passiveLimit=passiveDepthLimit(); if(surface()){updateLabels(); return;} if(suspend()){approachDepth(Math.min(suspendDepth(lure), passiveLimit), .022); depth=Math.min(depth,passiveLimit); updateLabels(); return;} depth=Math.min(passiveLimit,depth+0.032*weight()/5*Math.min(1.7,Math.max(.4,(Date.now()-castAt)/1000)/1.4)); updateLabels(); },140);
     }
     function cast(){
       if(suppressNextClick){ suppressNextClick=false; return; }
@@ -444,7 +446,7 @@
       if(buttons[active]){buttons[active].classList.add("lost"); buttons[active].innerHTML += "<br>×";}
       alert(`${lure.name} ${lure.weight} 挂丢了，这个饵不能用了`);
     }
-    function reel(){ if(!castOn||!spoolClosed||fighting)return; if(!snagged){ distance=Math.max(0,distance-.55); const lure=activeLure(); if(suspend())approachDepth(runningDepth(lure), lure.name==="小胖子"?.09:.06); else if(!surface())depth=Math.max(0,depth-.055); depth=Math.min(depth,maxDepthHere()); } setLurePosition(targetDistance ? distance/targetDistance : 0,false); if(snagged==="bottom"&&Math.random()<.045){$("state").textContent="解挂成功，带上来一点杂物"; snagged=""; $("rodView").classList.remove("bent","lifted");} if(snagged==="grass"&&Math.random()<.06){$("state").textContent="水草抖掉了，可以继续收"; snagged=""; $("rodView").classList.remove("bent","lifted");} if(snagged==="bottom"&&Math.random()<.006){$("state").textContent="断了，这个饵不能用了"; markLureLost(); snagged=""; distance=0;} tryEvent(); if(distance<=0){castOn=false; updateFishingLureButtons(); spoolClosed=false; lureLanded=false; snagged=""; depth=0; $("line").classList.remove("out"); $("line").style.width="0"; $("currentLure").classList.remove("cast","flying"); $("currentLure").style.transform=""; $("go").textContent="GO"; $("go").classList.remove("small","reeling"); $("rodView").classList.remove("bent","lifted"); $("state").textContent="收回来了，可以重新 GO"; clearInterval(reelTimer); suppressNextClick=true; setTimeout(()=>{suppressNextClick=false;},250);} updateLabels(); }
+    function reel(){ if(!castOn||!spoolClosed||fighting)return; if(!snagged){ distance=Math.max(0,distance-.34); const lure=activeLure(); if(suspend())approachDepth(Math.min(runningDepth(lure),lineDepthLimit), lure.name==="小胖子"?.07:.05); else if(!surface())depth=Math.max(.1,depth-.038); depth=Math.min(depth,passiveDepthLimit()); reelInLineLimit(); } setLurePosition(targetDistance ? distance/targetDistance : 0,false); if(snagged==="bottom"&&Math.random()<.045){$("state").textContent="解挂成功，带上来一点杂物"; snagged=""; $("rodView").classList.remove("bent","lifted");} if(snagged==="grass"&&Math.random()<.06){$("state").textContent="水草抖掉了，可以继续收"; snagged=""; $("rodView").classList.remove("bent","lifted");} if(snagged==="bottom"&&Math.random()<.006){$("state").textContent="断了，这个饵不能用了"; markLureLost(); snagged=""; distance=0;} tryEvent(); if(distance<=0){castOn=false; updateFishingLureButtons(); spoolClosed=false; lureLanded=false; snagged=""; depth=0; lineDepthLimit=Infinity; $("line").classList.remove("out"); $("line").style.width="0"; $("currentLure").classList.remove("cast","flying"); $("currentLure").style.transform=""; $("go").textContent="GO"; $("go").classList.remove("small","reeling"); $("rodView").classList.remove("bent","lifted"); $("state").textContent="收回来了，可以重新 GO"; clearInterval(reelTimer); suppressNextClick=true; setTimeout(()=>{suppressNextClick=false;},250);} updateLabels(); }
     function resetFishing(){
       clearInterval(sinkTimer);
       clearInterval(reelTimer);
@@ -525,12 +527,11 @@
       const lure = activeLure();
       const size = hookedLength ? [hookedLength, hookedMass.toFixed(2)] : fishSize(fishName, weight());
       const length = size[0];
-      const mass = size[1];
       const time = new Date().toLocaleString("zh-CN");
       $("fishPhoto").innerHTML = `<img src="${catchFishImage(fishName)}" alt="${fishName}">`;
       $("catchTitle").textContent = `${fishName} 到手`;
-      $("catchInfo").textContent = `${spot} · ${time} · ${length}cm · ${mass}kg`;
-      $("catchGear").textContent = `${rod} 硬度 · ${lure.name} ${lure.weight}`;
+      $("catchInfo").textContent = `${spot} · ${time}`;
+      $("catchGear").innerHTML = `${rod} 硬度 · ${lure.name} ${lure.weight}<br>${length}cm`;
       $("catchModal").classList.add("show");
       hookedLength=0; hookedMass=0; fishStamina=1; fightPressure=1;
       resetFishing();
@@ -567,7 +568,7 @@
       if ($("go").setPointerCapture) $("go").setPointerCapture(e.pointerId);
       $("go").classList.add("reeling");
       clearInterval(reelTimer);
-      reelTimer=setInterval(reel,90);
+      reelTimer=setInterval(reel,105);
     });
     $("go").addEventListener("pointermove",e=>{
       if(!draggingReel||!castOn||!spoolClosed||!lureLanded)return;
@@ -576,10 +577,11 @@
       const totalUp=dragStartY-e.clientY;
       const dragPower=Math.min(1.8,Math.hypot(dx,dy)/18);
       if(dragPower>.18){
-        if(!snagged)distance=Math.max(0,distance-.35*dragPower);
-        if(suspend())approachDepth(runningDepth(activeLure()), .035*dragPower);
-        else if(!surface())depth=Math.max(0,depth-.035*dragPower);
-        depth=Math.min(depth,maxDepthHere());
+        if(!snagged)distance=Math.max(0,distance-.22*dragPower);
+        if(suspend())approachDepth(Math.min(runningDepth(activeLure()),lineDepthLimit), .028*dragPower);
+        else if(!surface())depth=Math.max(.1,depth-.025*dragPower);
+        depth=Math.min(depth,passiveDepthLimit());
+        reelInLineLimit();
         updateLabels();
       }
       if(totalUp>26){
