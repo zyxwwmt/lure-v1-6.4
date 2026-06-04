@@ -250,7 +250,7 @@
       "陡坎": [-116, 62],
       "码头区": [-156, 44]
     };
-    let spot = "回湾", rod = "", lures = [], active = 0, distance = 0, targetDistance = 0, depth = 0, castOn = false, spoolClosed = false, lureLanded = false, snagged = "", hookedFish = "", hookedLength = 0, hookedMass = 0, fightPressure = 1, fighting = false, power = 28, redSince = 0, sinkTimer, reelTimer, flightTimer, fightTimer, castAt = 0, dragStartX = 0, dragStartY = 0, lastDragX = 0, lastDragY = 0, draggingReel = false, suppressNextClick = false;
+    let spot = "回湾", rod = "", lures = [], active = 0, distance = 0, targetDistance = 0, depth = 0, castOn = false, spoolClosed = false, lureLanded = false, snagged = "", hookedFish = "", hookedLength = 0, hookedMass = 0, fishStamina = 1, fightPressure = 1, fighting = false, power = 28, redSince = 0, sinkTimer, reelTimer, flightTimer, fightTimer, castAt = 0, dragStartX = 0, dragStartY = 0, lastDragX = 0, lastDragY = 0, draggingReel = false, suppressNextClick = false;
     const rodPower = { UL:.52, L:.68, ML:.84, M:1, MH:1.18, H:1.36 };
     function rodStrength(){ return rodPower[rod] || 1; }
     const fishTable = [
@@ -259,7 +259,10 @@
       {name:"鲶鱼", layer:[2.0,8.0], spots:["闸口","城市河道","陡坎"], lures:["铅头钩","Senko"]},
       {name:"鳡鱼", layer:[0.5,4.0], spots:["桦尖","闸口"], lures:["铅笔","米诺","VIB"]},
       {name:"黑鱼", layer:[0.1,1.5], spots:["回湾","城市河道"], lures:["波爬","之字狗","Senko"]},
-      {name:"鲈鱼", layer:[0.5,4.5], spots:["码头区","桥洞","城市河道"], lures:["米诺","小胖子","VIB","铅头钩"]}
+      {name:"鲈鱼", layer:[0.5,4.5], spots:["码头区","桥洞","城市河道"], lures:["米诺","小胖子","VIB","铅头钩"]},
+      {name:"白条", layer:[0.0,1.2], spots:["闸口","桥洞","城市河道","回湾","桦尖","码头区"], lures:["亮片","米诺","铅笔"], shore:true},
+      {name:"青稍", layer:[0.1,1.8], spots:["闸口","城市河道","回湾","桦尖"], lures:["亮片","米诺","铅笔","VIB"], shore:true},
+      {name:"红尾", layer:[0.2,2.2], spots:["闸口","回湾","桦尖","码头区"], lures:["亮片","米诺","VIB"], shore:true}
     ];
     function show(id){ screens.forEach(s=>s.classList.toggle("show",s.id===id)); }
     function rodSvg(){ return `<svg viewBox="0 0 48 48"><path d="M8 40 C18 30 29 16 42 6"></path><path d="M14 34 L21 41"></path><path d="M20 36 C22 31 28 32 30 36 C28 41 22 41 20 36 Z"></path><circle cx="25" cy="36" r="2.5"></circle><path d="M29 36 L35 39"></path></svg>`; }
@@ -322,7 +325,8 @@
       if(!surface() && depth>bottom*.92 && Math.random()<.025){ snagged="bottom"; $("state").textContent="挂底了！抬竿并收轮尝试解挂"; $("rodView").classList.add("bent"); return; }
       if((spot==="回湾"||spot==="城市河道"||spot==="码头区") && depth>.25 && depth<1.8 && Math.random()<.018){ snagged="grass"; $("state").textContent="挂草了，慢慢收回来"; $("rodView").classList.add("bent"); return; }
       const lure=activeLure();
-      const candidates=fishTable.filter(f=>depth>=f.layer[0]&&depth<=f.layer[1]&&f.spots.includes(spot)&&f.lures.includes(lure.name));
+      const nearShore = distance < Math.max(12, targetDistance * .42);
+      const candidates=fishTable.filter(f=>depth>=f.layer[0]&&depth<=f.layer[1]&&f.spots.includes(spot)&&f.lures.includes(lure.name)&&(!f.shore || (weight()===5 && nearShore)));
       if(candidates.length && Math.random()<.018){
         const fish=candidates[Math.floor(Math.random()*candidates.length)];
         startFight(fish.name);
@@ -334,6 +338,7 @@
       hookedLength=size[0];
       hookedMass=Number(size[1]);
       fightPressure=Math.max(.65, Math.min(5.6, hookedMass / rodStrength()));
+      fishStamina=Math.max(.28, Math.min(1, .34 + hookedMass / 5.5));
       fighting=true;
       power=Math.min(58, 24 + fightPressure * 4.8);
       redSince=0;
@@ -359,24 +364,26 @@
           burst = Math.random()<.18 ? 1 : 0;
           swimUntil = now + 420 + Math.random()*760;
         }
-        const runBase = .08 + fightPressure*.055;
-        const fishRun = swimDir*runBase + (burst && swimDir>=0 ? .18 + fightPressure*.055 : 0);
+        fishStamina=Math.max(0, fishStamina - (reeling ? .010 + .004*fightPressure : .004));
+        const tired = 1 - fishStamina;
+        const runBase = (.04 + fightPressure*.05) * (.22 + fishStamina*.95);
+        const fishRun = swimDir*runBase + (burst && swimDir>=0 ? (.1 + fightPressure*.045) * fishStamina : 0);
         if(reeling){
-          const pull=Math.max(.32, .78 * rodStrength() / Math.sqrt(Math.max(.8, hookedMass)));
+          const pull=Math.max(.48, (1.08 + tired*.55) * rodStrength() / Math.sqrt(Math.max(.65, hookedMass)));
           distance=Math.max(0,Math.min(targetDistance+18,distance + fishRun - pull));
           depth=Math.max(0,depth-.018 * rodStrength());
-          power+=.55 + fightPressure*.92 + Math.max(0,fishRun)*2.2;
+          power+=Math.max(.08, (.32 + fightPressure*.58 + Math.max(0,fishRun)*1.5) * (.25 + fishStamina*.95));
         }else{
           distance=Math.max(0,Math.min(targetDistance+18,distance + fishRun));
           depth=Math.max(0,Math.min(maxDepthHere(),depth + (Math.random()-.42)*(.04 + fightPressure*.015)));
-          power=Math.max(14,power-(1.1 + rodStrength()*.18));
+          power=Math.max(10,power-(1.25 + rodStrength()*.22 + tired*.35));
         }
         setLurePosition(targetDistance ? Math.max(0,Math.min(1,distance/targetDistance)) : 0,false);
         if(power>72 && reeling){
           if(!redSince)redSince=Date.now();
           if(Date.now()-redSince>2600){
             fighting=false; hookedFish="";
-            hookedLength=0; hookedMass=0; fightPressure=1;
+            hookedLength=0; hookedMass=0; fishStamina=1; fightPressure=1;
             castOn=false; spoolClosed=false; lureLanded=false;
             $("state").textContent="线断了，鱼跑了";
             $("powerMeter").classList.remove("show");
@@ -421,6 +428,8 @@
       lureLanded=false;
       fighting=false;
       hookedFish="";
+      fishStamina=1;
+      fightPressure=1;
       distance=0;
       depth=0;
       targetDistance=0;
@@ -448,19 +457,22 @@
     }
     function fishSize(fishName,lureWeight){
       const ranges={
-        "翘嘴":[32,92,.000014,3.05],
-        "鳜鱼":[25,68,.000032,3.12],
-        "鲶鱼":[35,110,.000012,3.02],
-        "鳡鱼":[45,130,.000010,3.0],
-        "黑鱼":[30,85,.000018,3.05],
-        "鲈鱼":[22,62,.000026,3.08]
+        "白条":[8,22,.01,.12],
+        "青稍":[14,38,.04,.65],
+        "红尾":[16,48,.06,1.35],
+        "翘嘴":[30,100,.18,7.5],
+        "鳜鱼":[22,70,.18,5.2],
+        "鲶鱼":[30,115,.35,13],
+        "鳡鱼":[45,135,.8,22],
+        "黑鱼":[25,90,.22,7],
+        "鲈鱼":[20,65,.15,4.2]
       };
       const r=ranges[fishName]||ranges["鲈鱼"];
       const weightBias=Math.max(0,Math.min(1,((lureWeight||5)-5)/10));
       const randomBias=Math.pow(Math.random(), 1.18 - weightBias*.42);
       const sizeRate=Math.max(0,Math.min(1, randomBias*.82 + weightBias*.22));
       const length=Math.round(r[0]+sizeRate*(r[1]-r[0]));
-      const mass=Math.max(.15,r[2]*Math.pow(length,r[3])*(.88+Math.random()*.24));
+      const mass=Math.max(.01,r[2]+Math.pow(sizeRate,2.85)*(r[3]-r[2])*(.9+Math.random()*.2));
       return [length,mass.toFixed(2)];
     }
     function catchFishImage(fishName){
@@ -470,7 +482,10 @@
         "鲶鱼":"catch-nianyu.jpg",
         "鳡鱼":"catch-ganyu.jpg",
         "黑鱼":"catch-heiyu.jpg",
-        "鲈鱼":"catch-luyu.jpg"
+        "鲈鱼":"catch-luyu.jpg",
+        "白条":"catch-baitiao.jpg",
+        "青稍":"catch-qingshao.jpg",
+        "红尾":"catch-hongwei.jpg"
       };
       return images[fishName] || images["鲈鱼"];
     }
@@ -488,7 +503,7 @@
       $("catchInfo").textContent = `${spot} · ${time} · ${length}cm · ${mass}kg`;
       $("catchGear").textContent = `${rod} 硬度 · ${lure.name} ${lure.weight}`;
       $("catchModal").classList.add("show");
-      hookedLength=0; hookedMass=0; fightPressure=1;
+      hookedLength=0; hookedMass=0; fishStamina=1; fightPressure=1;
       resetFishing();
     }
     $("start").onclick=()=>show("map");
