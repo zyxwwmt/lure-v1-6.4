@@ -293,7 +293,15 @@
     function updateLabels(){ $("distance").textContent=`距离 ${Math.max(0,distance).toFixed(1)}m`; $("depth").textContent=`饵深 ${Math.max(0,depth).toFixed(1)}m`; }
     function updatePower(){ $("powerFill").style.height = `${Math.max(0, Math.min(100, power))}%`; }
     function updateFishingLureButtons(){ document.querySelectorAll(".fish-lure").forEach(b=>b.classList.toggle("disabled", castOn)); }
-    function maxDepthHere(){ const cfg=settings[spot]||settings["回湾"]; const nearBank=Math.max(0,1-(targetDistance?distance/targetDistance:0)); return Math.max(.6,cfg[1]*(1-.68*nearBank)); }
+    function maxDepthHere(){
+      const cfg=settings[spot]||settings["回湾"];
+      if(!targetDistance)return cfg[1];
+      const bankZone=Math.max(8, Math.min(14, targetDistance*.28));
+      if(distance>=bankZone)return cfg[1];
+      const t=1-(distance/bankZone);
+      const shallowEase=t*t*(3-2*t);
+      return Math.max(.6,cfg[1]*(1-.72*shallowEase));
+    }
     function setLurePosition(progress, flying){
       const p = Math.max(0, Math.min(1, progress));
       const point = landingPoints[spot] || landingPoints["回湾"];
@@ -311,10 +319,27 @@
     }
     function activeLure(){ return lures[active] || lures[0]; }
     function surface(){ const l=activeLure(); return l && (l.name==="波爬"||l.name==="之字狗"); }
+    function suspend(){ const l=activeLure(); return l && (l.name==="米诺"||l.name==="小胖子"); }
     function weight(){ const lure = activeLure(); return Number(((lure && lure.weight) || "5g").replace("g","")); }
+    function suspendDepth(lure){
+      const w=weight();
+      const base = lure.name==="小胖子" ? 1.25 : .85;
+      const extra = w===15 ? .72 : w===10 ? .38 : 0;
+      return Math.min(maxDepthHere()*.86, base+extra);
+    }
+    function runningDepth(lure){
+      const w=weight();
+      const base = lure.name==="小胖子" ? 2.05 : 1.35;
+      const extra = w===15 ? 1.05 : w===10 ? .55 : 0;
+      return Math.min(maxDepthHere()*.94, base+extra);
+    }
+    function approachDepth(target,step){
+      if(depth<target)depth=Math.min(target,depth+step);
+      else depth=Math.max(target,depth-step);
+    }
     function setupFish(){
       const cfg=settings[spot]||settings["回湾"]; $("scene").className=`scene ${cfg[0]}`; active=0; distance=0; targetDistance=0; depth=0; castOn=false; spoolClosed=false; lureLanded=false; $("line").classList.remove("out"); $("line").style.width="0"; $("currentLure").classList.remove("cast","flying"); $("currentLure").style.transform=""; $("splash").classList.remove("show"); $("rodView").classList.remove("casting","lifted","bent"); $("go").textContent="GO"; $("go").classList.remove("small","reeling"); $("state").textContent=`${spot} · 选饵后点击 GO`;
-      $("picker").innerHTML=""; lures.forEach((l,i)=>{ const b=document.createElement("button"); b.className=`fish-lure${i===0?" active":""}${l.lost?" lost":""}`; b.innerHTML=lureSvg(l.name)+`<span>${l.name}<br>${l.weight}${l.lost?"<br>×":""}</span>`; b.onclick=()=>{if(castOn||b.classList.contains("lost"))return; active=i; document.querySelectorAll(".fish-lure").forEach(x=>x.classList.remove("active")); b.classList.add("active"); $("currentLure").innerHTML=lureSvg(l.name); $("rodView").classList.add("lifted"); setTimeout(()=>$("rodView").classList.remove("lifted"),420);}; $("picker").appendChild(b); }); $("currentLure").innerHTML=lureSvg(activeLure().name); updateLabels(); clearInterval(sinkTimer); sinkTimer=setInterval(()=>{ if(!castOn||!lureLanded||snagged||$("go").classList.contains("reeling"))return; const lure=activeLure(); if(surface()){updateLabels(); return;} if(lure.name==="小胖子"){depth=Math.max(0,depth-.025); updateLabels(); return;} depth=Math.min(maxDepthHere(),depth+0.055*weight()/5*Math.min(1.7,Math.max(.4,(Date.now()-castAt)/1000)/1.4)); updateLabels(); },140);
+      $("picker").innerHTML=""; lures.forEach((l,i)=>{ const b=document.createElement("button"); b.className=`fish-lure${i===0?" active":""}${l.lost?" lost":""}`; b.innerHTML=lureSvg(l.name)+`<span>${l.name}<br>${l.weight}${l.lost?"<br>×":""}</span>`; b.onclick=()=>{if(castOn||b.classList.contains("lost"))return; active=i; document.querySelectorAll(".fish-lure").forEach(x=>x.classList.remove("active")); b.classList.add("active"); $("currentLure").innerHTML=lureSvg(l.name); $("rodView").classList.add("lifted"); setTimeout(()=>$("rodView").classList.remove("lifted"),420);}; $("picker").appendChild(b); }); $("currentLure").innerHTML=lureSvg(activeLure().name); updateLabels(); clearInterval(sinkTimer); sinkTimer=setInterval(()=>{ if(!castOn||!lureLanded||snagged||$("go").classList.contains("reeling"))return; const lure=activeLure(); if(surface()){updateLabels(); return;} if(suspend()){approachDepth(suspendDepth(lure), .028); depth=Math.min(depth,maxDepthHere()); updateLabels(); return;} depth=Math.min(maxDepthHere(),depth+0.055*weight()/5*Math.min(1.7,Math.max(.4,(Date.now()-castAt)/1000)/1.4)); updateLabels(); },140);
     }
     function cast(){
       if(suppressNextClick){ suppressNextClick=false; return; }
@@ -417,7 +442,7 @@
       if(buttons[active]){buttons[active].classList.add("lost"); buttons[active].innerHTML += "<br>×";}
       alert(`${lure.name} ${lure.weight} 挂丢了，这个饵不能用了`);
     }
-    function reel(){ if(!castOn||!spoolClosed||fighting)return; const slow=snagged?0.22:.55; distance=Math.max(0,distance-slow); if(!snagged){ if(activeLure().name==="小胖子")depth=Math.min(maxDepthHere(),depth+.075); else if(!surface())depth=Math.max(0,depth-.055); } setLurePosition(targetDistance ? distance/targetDistance : 0,false); if(snagged==="bottom"&&Math.random()<.045){$("state").textContent="解挂成功，带上来一点杂物"; snagged=""; $("rodView").classList.remove("bent","lifted");} if(snagged==="grass"&&distance<3){$("state").textContent="水草收回来了，这个饵还能用"; snagged=""; $("rodView").classList.remove("bent","lifted");} if(snagged==="bottom"&&Math.random()<.006){$("state").textContent="断了，这个饵不能用了"; markLureLost(); snagged=""; distance=0;} tryEvent(); if(distance<=0){castOn=false; updateFishingLureButtons(); spoolClosed=false; lureLanded=false; snagged=""; depth=0; $("line").classList.remove("out"); $("line").style.width="0"; $("currentLure").classList.remove("cast","flying"); $("currentLure").style.transform=""; $("go").textContent="GO"; $("go").classList.remove("small","reeling"); $("rodView").classList.remove("bent","lifted"); $("state").textContent="收回来了，可以重新 GO"; clearInterval(reelTimer); suppressNextClick=true; setTimeout(()=>{suppressNextClick=false;},250);} updateLabels(); }
+    function reel(){ if(!castOn||!spoolClosed||fighting)return; const slow=snagged?0.22:.55; distance=Math.max(0,distance-slow); if(!snagged){ const lure=activeLure(); if(suspend())approachDepth(runningDepth(lure), lure.name==="小胖子"?.09:.06); else if(!surface())depth=Math.max(0,depth-.055); depth=Math.min(depth,maxDepthHere()); } setLurePosition(targetDistance ? distance/targetDistance : 0,false); if(snagged==="bottom"&&Math.random()<.045){$("state").textContent="解挂成功，带上来一点杂物"; snagged=""; $("rodView").classList.remove("bent","lifted");} if(snagged==="grass"&&distance<3){$("state").textContent="水草收回来了，这个饵还能用"; snagged=""; $("rodView").classList.remove("bent","lifted");} if(snagged==="bottom"&&Math.random()<.006){$("state").textContent="断了，这个饵不能用了"; markLureLost(); snagged=""; distance=0;} tryEvent(); if(distance<=0){castOn=false; updateFishingLureButtons(); spoolClosed=false; lureLanded=false; snagged=""; depth=0; $("line").classList.remove("out"); $("line").style.width="0"; $("currentLure").classList.remove("cast","flying"); $("currentLure").style.transform=""; $("go").textContent="GO"; $("go").classList.remove("small","reeling"); $("rodView").classList.remove("bent","lifted"); $("state").textContent="收回来了，可以重新 GO"; clearInterval(reelTimer); suppressNextClick=true; setTimeout(()=>{suppressNextClick=false;},250);} updateLabels(); }
     function resetFishing(){
       clearInterval(sinkTimer);
       clearInterval(reelTimer);
