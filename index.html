@@ -130,12 +130,16 @@
     .go.small { font-size: 14px; }
     .go.reeling { animation: spin .5s linear infinite; }
     .state { position: absolute; left: 50%; bottom: 118px; z-index: 7; margin: 0; padding: 6px 12px; border-radius: 14px; background: rgba(255,255,255,.72); color: #245d62; font-size: 13px; font-weight: 900; transform: translateX(-50%); }
+    .cast-meter { position: absolute; left: 50%; bottom: 154px; z-index: 8; display: none; width: 176px; height: 18px; border: 3px solid rgba(36,93,98,.45); border-radius: 12px; background: linear-gradient(90deg,#ff7f6f 0 30%,#ffd166 30% 42%,#71d982 42% 68%,#ffd166 68% 80%,#ff7f6f 80% 100%); transform: translateX(-50%); box-shadow: 0 8px 18px rgba(23,58,64,.18); }
+    .cast-meter.show { display: block; }
+    .cast-mark { position: absolute; top: -6px; left: 0%; width: 6px; height: 24px; border-radius: 4px; background: #245d62; box-shadow: 0 0 0 2px #fff7d6; transform: translateX(-50%); }
     .power-meter { position: absolute; left: 15px; top: 92px; z-index: 7; display: none; width: 22px; height: 180px; border: 3px solid rgba(36,93,98,.55); border-radius: 14px; background: linear-gradient(0deg,#71d982 0 48%,#ffe06a 48% 72%,#ff6b5f 72% 100%); overflow: hidden; box-shadow: 0 8px 20px rgba(23,58,64,.18); }
     .power-meter.show { display: block; }
     .power-fill { position: absolute; left: 0; right: 0; bottom: 0; height: 0%; background: rgba(36,93,98,.42); transition: height .12s linear; }
     .strike-lines { position: absolute; inset: 0; z-index: 6; display: none; pointer-events: none; background: radial-gradient(circle at 54% 45%, transparent 0 25%, rgba(255,255,255,.5) 26%, transparent 29%), repeating-conic-gradient(from 0deg at 54% 45%, rgba(255,255,255,.75) 0 4deg, transparent 4deg 18deg); opacity: .65; }
     .strike-lines.show { display: block; animation: strikeFlash .55s ease both; }
     .back-map { position: absolute; left: 14px; top: 14px; z-index: 8; height: 38px; padding: 0 14px; border: 2px solid rgba(31,137,166,.2); border-radius: 19px; background: rgba(255,255,255,.88); color: #245d62; box-shadow: 0 6px 16px rgba(49,122,139,.16); font-size: 14px; font-weight: 900; }
+    .album-button { position: absolute; right: 14px; top: 14px; z-index: 8; height: 38px; padding: 0 14px; border: 2px solid rgba(31,137,166,.2); border-radius: 19px; background: rgba(255,255,255,.88); color: #245d62; box-shadow: 0 6px 16px rgba(49,122,139,.16); font-size: 14px; font-weight: 900; }
     .catch-modal { position: absolute; inset: 0; z-index: 20; display: none; align-items: center; justify-content: center; padding: 20px; background: rgba(23,58,64,.38); }
     .catch-modal.show { display: flex; }
     .catch-card { width: min(100%, 340px); padding: 18px; border: 3px solid rgba(79,166,170,.34); border-radius: 26px; background: rgba(255,255,255,.94); color: #245d62; box-shadow: 0 22px 44px rgba(23,58,64,.24); text-align: center; }
@@ -146,6 +150,11 @@
     .catch-card p { margin: 5px 0; color: #456066; font-size: 14px; font-weight: 800; }
     .catch-actions { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 14px; }
     .catch-actions button { height: 44px; border: 2px solid #4fa6aa; border-radius: 22px; background: #fff7d6; color: #245d62; font-weight: 900; }
+    .album-list { max-height: 360px; overflow: auto; display: grid; gap: 10px; margin-top: 10px; text-align: left; }
+    .album-row { display: grid; grid-template-columns: 64px 1fr; gap: 10px; align-items: center; padding: 8px; border: 2px solid rgba(79,166,170,.18); border-radius: 14px; background: rgba(223,243,242,.55); }
+    .album-row img { width: 64px; height: 42px; object-fit: contain; mix-blend-mode: multiply; }
+    .album-row strong { display: block; color: #245d62; }
+    .album-row span { display: block; margin-top: 3px; color: #456066; font-size: 12px; font-weight: 800; }
     @keyframes in { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes lock { from { opacity: 0; transform: scale(.84); } to { opacity: 1; transform: scale(1); } }
     @keyframes pop { 0% { opacity: 0; transform: translate(-50%,-50%) scale(.6); } 45% { opacity: 1; transform: translate(-50%,-50%) scale(1.08); } 100% { opacity: 0; transform: translate(-50%,80%) scale(.38); } }
@@ -206,6 +215,7 @@
     <section class="screen fish" id="fish">
       <div class="scene" id="scene"><div class="structure"></div></div>
       <button class="back-map" id="backMap">换标点</button>
+      <button class="album-button" id="openAlbum">图鉴</button>
       <div class="power-meter" id="powerMeter"><div class="power-fill" id="powerFill"></div></div>
       <div class="strike-lines" id="strikeLines"></div>
       <div class="labels"><p id="distance">距离 0m</p><p id="depth">饵深 0.0m</p></div>
@@ -223,7 +233,7 @@
         </svg>
         <div class="line" id="line"></div><div class="current-lure" id="currentLure"></div><div class="splash" id="splash"></div><div class="reel"></div><div class="hand"></div>
       </div>
-      <p class="state" id="state">选饵后点击 GO</p><button class="go" id="go">GO</button>
+      <p class="state" id="state">选饵后点击 GO</p><div class="cast-meter" id="castMeter"><div class="cast-mark" id="castMark"></div></div><button class="go" id="go">GO</button>
       <div class="catch-modal" id="catchModal">
         <article class="catch-card" id="catchCard">
           <div class="fish-photo" id="fishPhoto"></div>
@@ -232,6 +242,16 @@
           <p id="catchGear"></p>
           <div class="catch-actions">
             <button id="releaseFish">放流</button>
+          </div>
+        </article>
+      </div>
+      <div class="catch-modal" id="albumModal">
+        <article class="catch-card">
+          <h2>本点图鉴</h2>
+          <p id="albumHint"></p>
+          <div class="album-list" id="albumList"></div>
+          <div class="catch-actions">
+            <button id="closeAlbum">关闭</button>
           </div>
         </article>
       </div>
@@ -252,7 +272,7 @@
       "陡坎": [-116, 62],
       "码头区": [-156, 44]
     };
-    let spot = "回湾", rod = "", lures = [], active = 0, distance = 0, targetDistance = 0, depth = 0, lineDepthLimit = Infinity, castOn = false, spoolClosed = false, lureLanded = false, snagged = "", hookedFish = "", hookedLength = 0, hookedMass = 0, fishStamina = 1, fightPressure = 1, fighting = false, power = 28, redSince = 0, sinkTimer, reelTimer, flightTimer, fightTimer, castAt = 0, dragStartX = 0, dragStartY = 0, lastDragX = 0, lastDragY = 0, draggingReel = false, suppressNextClick = false;
+    let spot = "回湾", rod = "", lures = [], active = 0, distance = 0, targetDistance = 0, depth = 0, lineDepthLimit = Infinity, castOn = false, spoolClosed = false, lureLanded = false, snagged = "", hookedFish = "", hookedLength = 0, hookedMass = 0, fishStamina = 1, fightPressure = 1, fighting = false, power = 28, redSince = 0, sinkTimer, reelTimer, flightTimer, fightTimer, chargeTimer, castAt = 0, castCharge = 0, castDir = 1, castQuality = 1, biteHeat = 0, spotAlbum = {}, dragStartX = 0, dragStartY = 0, lastDragX = 0, lastDragY = 0, draggingReel = false, chargingCast = false, suppressNextClick = false;
     const rodPower = { UL:.52, L:.68, ML:.84, M:1, MH:1.18, H:1.36 };
     function rodStrength(){ return rodPower[rod] || 1; }
     function rodBias(){
@@ -263,6 +283,15 @@
       if(["鳡鱼","鲶鱼"].includes(name))return "big";
       return "mid";
     }
+    const spotWeights = {
+      "桥洞": {"鳜鱼":1.45,"鲈鱼":1.25},
+      "码头区": {"鳜鱼":1.35,"鲈鱼":1.35,"红尾":1.12},
+      "闸口": {"翘嘴":1.35,"鳡鱼":1.32,"红尾":1.18,"鲶鱼":1.1},
+      "回湾": {"黑鱼":1.42,"红尾":1.22,"白条":1.15,"青稍":1.12},
+      "桦尖": {"翘嘴":1.38,"鳡鱼":1.28,"青稍":1.12},
+      "陡坎": {"鲶鱼":1.35,"鳜鱼":1.25,"鳡鱼":1.18},
+      "城市河道": {"黑鱼":1.22,"鲈鱼":1.18,"鲶鱼":1.12}
+    };
     const fishTable = [
       {name:"翘嘴", layer:[0.2,3.5], spots:["桦尖","回湾","闸口"], lures:["铅笔","米诺","亮片","VIB"]},
       {name:"鳜鱼", layer:[1.0,6.5], spots:["桥洞","陡坎","码头区"], lures:["米诺","小胖子","铅头钩","VIB"]},
@@ -350,33 +379,97 @@
       else depth=Math.max(target,depth-step);
     }
     function setupFish(){
-      const cfg=settings[spot]||settings["回湾"]; $("scene").className=`scene ${cfg[0]}`; active=0; distance=0; targetDistance=0; depth=0; lineDepthLimit=Infinity; castOn=false; spoolClosed=false; lureLanded=false; $("line").classList.remove("out"); $("line").style.width="0"; $("currentLure").classList.remove("cast","flying"); $("currentLure").style.transform=""; $("splash").classList.remove("show"); $("rodView").classList.remove("casting","lifted","bent"); $("go").textContent="GO"; $("go").classList.remove("small","reeling"); $("state").textContent=`${spot} · 选饵后点击 GO`;
+      const cfg=settings[spot]||settings["回湾"]; $("scene").className=`scene ${cfg[0]}`; active=0; distance=0; targetDistance=0; depth=0; lineDepthLimit=Infinity; castOn=false; spoolClosed=false; lureLanded=false; castQuality=1; biteHeat=0; spotAlbum={}; chargingCast=false; clearInterval(chargeTimer); $("castMeter").classList.remove("show"); $("line").classList.remove("out"); $("line").style.width="0"; $("currentLure").classList.remove("cast","flying"); $("currentLure").style.transform=""; $("splash").classList.remove("show"); $("rodView").classList.remove("casting","lifted","bent"); $("go").textContent="按住GO"; $("go").classList.remove("small","reeling"); $("state").textContent=`${spot} · 按住 GO 蓄力抛投`;
       $("picker").innerHTML=""; lures.forEach((l,i)=>{ const b=document.createElement("button"); b.className=`fish-lure${i===0?" active":""}${l.lost?" lost":""}`; b.innerHTML=lureSvg(l.name)+`<span>${l.name}<br>${l.weight}${l.lost?"<br>×":""}</span>`; b.onclick=()=>{if(castOn||b.classList.contains("lost"))return; active=i; document.querySelectorAll(".fish-lure").forEach(x=>x.classList.remove("active")); b.classList.add("active"); $("currentLure").innerHTML=lureSvg(l.name); $("rodView").classList.add("lifted"); setTimeout(()=>$("rodView").classList.remove("lifted"),420);}; $("picker").appendChild(b); }); $("currentLure").innerHTML=lureSvg(activeLure().name); updateLabels(); clearInterval(sinkTimer); sinkTimer=setInterval(()=>{ if(!castOn||!lureLanded||snagged||$("go").classList.contains("reeling"))return; const lure=activeLure(); const passiveLimit=passiveDepthLimit(); if(surface()){updateLabels(); return;} if(suspend()){approachDepth(Math.min(suspendDepth(lure), passiveLimit), .022); depth=Math.min(depth,passiveLimit); updateLabels(); return;} depth=Math.min(passiveLimit,depth+0.032*weight()/5*Math.min(1.7,Math.max(.4,(Date.now()-castAt)/1000)/1.4)); updateLabels(); },140);
     }
-    function cast(){
+    function closeSpool(){
+      if(!castOn||spoolClosed)return;
+      spoolClosed=true;
+      if(lureLanded)lockLineDepth();
+      $("go").textContent="收轮";
+      $("go").classList.add("small");
+      $("state").textContent="线杯已关闭，按住按钮收轮";
+    }
+    function castQualityFromCharge(value){
+      if(value>=42&&value<=68)return 1.08;
+      const miss = value<42 ? 42-value : value-68;
+      return Math.max(.55, 1 - miss/55);
+    }
+    function updateCastMeter(){
+      $("castMark").style.left = `${Math.max(0,Math.min(100,castCharge))}%`;
+    }
+    function startCastCharge(e){
       if(suppressNextClick){ suppressNextClick=false; return; }
-      if(castOn){ if(!spoolClosed){spoolClosed=true; if(lureLanded)lockLineDepth(); $("go").textContent="收轮"; $("go").classList.add("small"); $("state").textContent="线杯已关闭，按住按钮收轮";} return; }
-      castOn=true; updateFishingLureButtons(); spoolClosed=false; lureLanded=false; lineDepthLimit=Infinity; castAt=Date.now(); targetDistance=weight()===5?22+Math.random()*8:weight()===10?34+Math.random()*10:48+Math.random()*12; if(activeLure().name==="亮片")targetDistance*=1.18; distance=0; depth=0; $("rodView").classList.add("casting"); $("line").classList.add("out"); setLurePosition(0,true); $("splash").classList.remove("show"); $("state").textContent="饵飞出去了，点击圆钮关闭线杯"; $("go").textContent="关线杯"; $("go").classList.add("small"); setTimeout(()=>$("rodView").classList.remove("casting"),820); clearInterval(flightTimer); flightTimer=setInterval(()=>{ const progress=Math.min(1,(Date.now()-castAt)/900); distance=targetDistance*(1-Math.pow(1-progress,2)); setLurePosition(progress,true); if(progress>=1){ clearInterval(flightTimer); lureLanded=true; distance=targetDistance; depth=surface()?0:.15; if(spoolClosed)lockLineDepth(); setLurePosition(1,false); $("splash").classList.remove("show"); void $("splash").offsetWidth; $("splash").classList.add("show"); $("state").textContent=spoolClosed?"线杯已关闭，按住按钮收轮":"落水了，没关线杯会继续出线下沉"; } updateLabels(); },40); updateLabels();
+      if(castOn){ if(!spoolClosed)closeSpool(); return; }
+      chargingCast=true;
+      castCharge=0;
+      castDir=1;
+      updateCastMeter();
+      $("castMeter").classList.add("show");
+      $("state").textContent="松开 GO 抛投，绿色区间最好";
+      if ($("go").setPointerCapture) $("go").setPointerCapture(e.pointerId);
+      clearInterval(chargeTimer);
+      chargeTimer=setInterval(()=>{
+        castCharge += castDir * 4.2;
+        if(castCharge>=100){ castCharge=100; castDir=-1; }
+        if(castCharge<=0){ castCharge=0; castDir=1; }
+        updateCastMeter();
+      },24);
+    }
+    function releaseCastCharge(){
+      if(!chargingCast)return;
+      chargingCast=false;
+      clearInterval(chargeTimer);
+      $("castMeter").classList.remove("show");
+      cast(castQualityFromCharge(castCharge), castCharge);
+    }
+    function cast(quality=1, charge=55){
+      if(castOn)return;
+      castQuality=quality;
+      biteHeat=0;
+      castOn=true; updateFishingLureButtons(); spoolClosed=false; lureLanded=false; lineDepthLimit=Infinity; castAt=Date.now(); targetDistance=weight()===5?22+Math.random()*8:weight()===10?34+Math.random()*10:48+Math.random()*12; if(activeLure().name==="亮片")targetDistance*=1.18; targetDistance*=.72+Math.max(0,Math.min(100,charge))/100*.72; distance=0; depth=0; $("rodView").classList.add("casting"); $("line").classList.add("out"); setLurePosition(0,true); $("splash").classList.remove("show"); $("state").textContent=quality>=1.05?"抛投不错，点击圆钮关闭线杯":charge<42?"抛得太近，落点偏岸边，点击圆钮关闭线杯":"抛得太远，落点偏离标点，点击圆钮关闭线杯"; $("go").textContent="关线杯"; $("go").classList.add("small"); setTimeout(()=>$("rodView").classList.remove("casting"),820); clearInterval(flightTimer); flightTimer=setInterval(()=>{ const progress=Math.min(1,(Date.now()-castAt)/900); distance=targetDistance*(1-Math.pow(1-progress,2)); setLurePosition(progress,true); if(progress>=1){ clearInterval(flightTimer); lureLanded=true; distance=targetDistance; depth=surface()?0:.15; if(spoolClosed)lockLineDepth(); setLurePosition(1,false); $("splash").classList.remove("show"); void $("splash").offsetWidth; $("splash").classList.add("show"); $("state").textContent=spoolClosed?"线杯已关闭，按住按钮收轮":"落水了，没关线杯会继续出线下沉"; } updateLabels(); },40); updateLabels();
     }
     function tryEvent(){
       if(!castOn||!lureLanded||snagged)return;
       const bottom=maxDepthHere();
-      if(!surface() && depth>bottom*.92 && Math.random()<.025){ snagged="bottom"; $("state").textContent="挂底了！抬竿并收轮尝试解挂"; $("rodView").classList.add("bent"); return; }
-      if((spot==="回湾"||spot==="城市河道"||spot==="码头区") && depth>.25 && depth<1.8 && Math.random()<.018){ snagged="grass"; $("state").textContent="挂草了，慢慢收回来"; $("rodView").classList.add("bent"); return; }
       const lure=activeLure();
+      const bottomRisk = snagRisk(lure);
+      if(!surface() && depth>bottom*.92 && Math.random()<bottomRisk){ snagged="bottom"; $("state").textContent="挂底了！抬竿并收轮尝试解挂"; $("rodView").classList.add("bent"); biteHeat=0; return; }
+      if((spot==="回湾"||spot==="城市河道"||spot==="码头区") && depth>.25 && depth<1.8 && Math.random()<grassRisk(lure)){ snagged="grass"; $("state").textContent="挂草了，慢慢收回来"; $("rodView").classList.add("bent"); biteHeat=0; return; }
       const nearShore = distance < Math.max(12, targetDistance * .42);
       const candidates=fishTable.filter(f=>depth>=f.layer[0]&&depth<=f.layer[1]&&f.spots.includes(spot)&&f.lures.includes(lure.name)&&(!f.shore || (weight()===5 && nearShore)));
       if(candidates.length && Math.random()<biteChance(lure)){
         const fish=pickFish(candidates,lure);
+        biteHeat=0;
         startFight(fish.name);
+      }else if(candidates.length){
+        biteHeat=Math.min(.018,biteHeat+.0008);
       }
     }
+    function snagRisk(lure){
+      if(surface())return 0;
+      let risk=.018;
+      if(lure.name==="铅头钩")risk+=.02;
+      if(lure.name==="VIB")risk+=.015;
+      if(lure.name==="Senko")risk+=.006;
+      if(lure.name==="小胖子")risk+=.004;
+      return risk;
+    }
+    function grassRisk(lure){
+      if(surface())return .004;
+      let risk=.014;
+      if(lure.name==="小胖子")risk+=.01;
+      if(lure.name==="VIB")risk+=.006;
+      if(lure.name==="铅头钩")risk+=.005;
+      return risk;
+    }
     function biteChance(lure){
-      let chance=.026;
+      let chance=.026 + biteHeat;
       if(surface() && depth<=.35)chance+=.008;
       if(lure.name==="铅头钩" && depth>Math.max(1.6,maxDepthHere()*.45))chance+=.007;
       if((lure.name==="米诺"||lure.name==="小胖子") && depth>=.6 && depth<=3.2)chance+=.006;
       if(lure.name==="亮片")chance+=.003;
+      chance*=castQuality;
       return Math.min(.052,chance);
     }
     function fishWeightScore(f,lure){
@@ -390,6 +483,7 @@
       if((lure.name==="波爬"||lure.name==="之字狗") && f.layer[0]<=.2)score*=1.55;
       if((lure.name==="米诺"||lure.name==="小胖子") && f.layer[0]>.2 && f.layer[1]>=2)score*=1.34;
       if(lure.name==="亮片" && f.shore)score*=1.22;
+      score*=((spotWeights[spot]||{})[f.name] || 1);
       return Math.max(.08,score);
     }
     function pickFish(candidates,lure){
@@ -482,13 +576,15 @@
       if(buttons[active]){buttons[active].classList.add("lost"); buttons[active].innerHTML += "<br>×";}
       alert(`${lure.name} ${lure.weight} 挂丢了，这个饵不能用了`);
     }
-    function reel(){ if(!castOn||!spoolClosed||fighting)return; if(!snagged){ distance=Math.max(0,distance-.34); const lure=activeLure(); if(suspend())approachDepth(Math.min(runningDepth(lure),lineDepthLimit), lure.name==="小胖子"?.07:.05); else if(!surface())depth=Math.max(.1,depth-.038); depth=Math.min(depth,passiveDepthLimit()); reelInLineLimit(); } setLurePosition(targetDistance ? distance/targetDistance : 0,false); if(snagged==="bottom"&&Math.random()<.045){$("state").textContent="解挂成功，带上来一点杂物"; snagged=""; $("rodView").classList.remove("bent","lifted");} if(snagged==="grass"&&Math.random()<.06){$("state").textContent="水草抖掉了，可以继续收"; snagged=""; $("rodView").classList.remove("bent","lifted");} if(snagged==="bottom"&&Math.random()<.006){$("state").textContent="断了，这个饵不能用了"; markLureLost(); snagged=""; distance=0;} tryEvent(); if(distance<=0){castOn=false; updateFishingLureButtons(); spoolClosed=false; lureLanded=false; snagged=""; depth=0; lineDepthLimit=Infinity; $("line").classList.remove("out"); $("line").style.width="0"; $("currentLure").classList.remove("cast","flying"); $("currentLure").style.transform=""; $("go").textContent="GO"; $("go").classList.remove("small","reeling"); $("rodView").classList.remove("bent","lifted"); $("state").textContent="收回来了，可以重新 GO"; clearInterval(reelTimer); suppressNextClick=true; setTimeout(()=>{suppressNextClick=false;},250);} updateLabels(); }
+    function reel(){ if(!castOn||!spoolClosed||fighting)return; if(!snagged){ distance=Math.max(0,distance-.34); const lure=activeLure(); if(suspend())approachDepth(Math.min(runningDepth(lure),lineDepthLimit), lure.name==="小胖子"?.07:.05); else if(!surface())depth=Math.max(.1,depth-.038); depth=Math.min(depth,passiveDepthLimit()); reelInLineLimit(); } setLurePosition(targetDistance ? distance/targetDistance : 0,false); if(snagged==="bottom"&&Math.random()<.045){$("state").textContent="解挂成功，带上来一点杂物"; snagged=""; $("rodView").classList.remove("bent","lifted");} if(snagged==="grass"&&Math.random()<.06){$("state").textContent="水草抖掉了，可以继续收"; snagged=""; $("rodView").classList.remove("bent","lifted");} if(snagged==="bottom"&&Math.random()<.006){$("state").textContent="断了，这个饵不能用了"; markLureLost(); snagged=""; distance=0;} tryEvent(); if(distance<=0){castOn=false; updateFishingLureButtons(); spoolClosed=false; lureLanded=false; snagged=""; depth=0; lineDepthLimit=Infinity; $("line").classList.remove("out"); $("line").style.width="0"; $("currentLure").classList.remove("cast","flying"); $("currentLure").style.transform=""; $("go").textContent="按住GO"; $("go").classList.remove("small","reeling"); $("rodView").classList.remove("bent","lifted"); $("state").textContent="收回来了，可以重新按住 GO"; clearInterval(reelTimer); suppressNextClick=true; setTimeout(()=>{suppressNextClick=false;},250);} updateLabels(); }
     function resetFishing(){
       clearInterval(sinkTimer);
       clearInterval(reelTimer);
       clearInterval(flightTimer);
       clearInterval(fightTimer);
       draggingReel=false;
+      chargingCast=false;
+      clearInterval(chargeTimer);
       castOn=false;
       updateFishingLureButtons();
       spoolClosed=false;
@@ -508,7 +604,8 @@
       $("splash").classList.remove("show");
       $("rodView").classList.remove("casting","lifted","bent");
       $("powerMeter").classList.remove("show");
-      $("go").textContent="GO";
+      $("castMeter").classList.remove("show");
+      $("go").textContent="按住GO";
       $("go").classList.remove("small","reeling");
       updateLabels();
     }
@@ -565,6 +662,9 @@
       const size = hookedLength ? [hookedLength, hookedMass.toFixed(2)] : fishSize(fishName, weight());
       const length = size[0];
       const time = new Date().toLocaleString("zh-CN");
+      if(!spotAlbum[fishName] || length>spotAlbum[fishName].length){
+        spotAlbum[fishName] = { name:fishName, length, time, gear:`${rod} 硬度 · ${lure.name} ${lure.weight}` };
+      }
       $("fishPhoto").innerHTML = `<img src="${catchFishImage(fishName)}" alt="${fishName}">`;
       $("catchTitle").textContent = `${fishName} 到手`;
       $("catchInfo").textContent = `${spot} · ${time}`;
@@ -572,6 +672,15 @@
       $("catchModal").classList.add("show");
       hookedLength=0; hookedMass=0; fishStamina=1; fightPressure=1;
       resetFishing();
+    }
+    function renderAlbum(){
+      const records = Object.values(spotAlbum).sort((a,b)=>fishTable.findIndex(f=>f.name===a.name)-fishTable.findIndex(f=>f.name===b.name));
+      $("albumHint").textContent = `${spot} · 已记录 ${records.length} 种鱼`;
+      if(!records.length){
+        $("albumList").innerHTML = `<p>本标点还没有鱼获</p>`;
+        return;
+      }
+      $("albumList").innerHTML = records.map(r=>`<article class="album-row"><img src="${catchFishImage(r.name)}" alt="${r.name}"><div><strong>${r.name} · ${r.length}cm</strong><span>${r.gear}</span><span>${r.time}</span></div></article>`).join("");
     }
     $("start").onclick=()=>show("map");
     document.querySelectorAll(".spot").forEach(s=>s.onclick=()=>{document.querySelectorAll(".spot").forEach(x=>x.classList.remove("active")); s.classList.add("active"); spot=s.dataset.name; $("spotName").textContent=spot; $("spotDesc").textContent=s.dataset.desc; $("tip").classList.add("show");});
@@ -594,9 +703,15 @@
       $("catchModal").classList.remove("show");
       $("state").textContent="放流完成，可以继续 GO";
     };
-    $("go").onclick=cast;
+    $("openAlbum").onclick=()=>{
+      renderAlbum();
+      $("albumModal").classList.add("show");
+    };
+    $("closeAlbum").onclick=()=>$("albumModal").classList.remove("show");
     $("go").addEventListener("pointerdown",e=>{
-      if(!castOn||!spoolClosed)return;
+      if(castOn&&!spoolClosed){ closeSpool(); return; }
+      if(!castOn){ startCastCharge(e); return; }
+      if(!spoolClosed||!lureLanded)return;
       draggingReel=true;
       dragStartX=e.clientX;
       dragStartY=e.clientY;
@@ -644,7 +759,11 @@
       $("rodView").classList.remove("lifted");
       clearInterval(reelTimer);
     }
-    ["pointerup","pointercancel","pointerleave"].forEach(ev=>$("go").addEventListener(ev,stopMouseReel));
+    function stopGoPointer(){
+      if(chargingCast)releaseCastCharge();
+      if(draggingReel)stopMouseReel();
+    }
+    ["pointerup","pointercancel","pointerleave"].forEach(ev=>$("go").addEventListener(ev,stopGoPointer));
     window.addEventListener("deviceorientation",e=>{ if(!castOn||!e.beta)return; if(e.beta<25){$("rodView").classList.add("lifted"); if(suspend()){approachDepth(Math.max(.15,suspendDepth(activeLure())-.25),.045); depth=Math.min(depth,passiveDepthLimit()); updateLabels();}else if(!surface()){depth=Math.max(0,depth-.12); updateLabels();}} else $("rodView").classList.remove("lifted");});
   </script>
 </body>
