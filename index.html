@@ -442,7 +442,7 @@
       if(buttons[active]){buttons[active].classList.add("lost"); buttons[active].innerHTML += "<br>×";}
       alert(`${lure.name} ${lure.weight} 挂丢了，这个饵不能用了`);
     }
-    function reel(){ if(!castOn||!spoolClosed||fighting)return; const slow=snagged?0.22:.55; distance=Math.max(0,distance-slow); if(!snagged){ const lure=activeLure(); if(suspend())approachDepth(runningDepth(lure), lure.name==="小胖子"?.09:.06); else if(!surface())depth=Math.max(0,depth-.055); depth=Math.min(depth,maxDepthHere()); } setLurePosition(targetDistance ? distance/targetDistance : 0,false); if(snagged==="bottom"&&Math.random()<.045){$("state").textContent="解挂成功，带上来一点杂物"; snagged=""; $("rodView").classList.remove("bent","lifted");} if(snagged==="grass"&&distance<3){$("state").textContent="水草收回来了，这个饵还能用"; snagged=""; $("rodView").classList.remove("bent","lifted");} if(snagged==="bottom"&&Math.random()<.006){$("state").textContent="断了，这个饵不能用了"; markLureLost(); snagged=""; distance=0;} tryEvent(); if(distance<=0){castOn=false; updateFishingLureButtons(); spoolClosed=false; lureLanded=false; snagged=""; depth=0; $("line").classList.remove("out"); $("line").style.width="0"; $("currentLure").classList.remove("cast","flying"); $("currentLure").style.transform=""; $("go").textContent="GO"; $("go").classList.remove("small","reeling"); $("rodView").classList.remove("bent","lifted"); $("state").textContent="收回来了，可以重新 GO"; clearInterval(reelTimer); suppressNextClick=true; setTimeout(()=>{suppressNextClick=false;},250);} updateLabels(); }
+    function reel(){ if(!castOn||!spoolClosed||fighting)return; if(!snagged){ distance=Math.max(0,distance-.55); const lure=activeLure(); if(suspend())approachDepth(runningDepth(lure), lure.name==="小胖子"?.09:.06); else if(!surface())depth=Math.max(0,depth-.055); depth=Math.min(depth,maxDepthHere()); } setLurePosition(targetDistance ? distance/targetDistance : 0,false); if(snagged==="bottom"&&Math.random()<.045){$("state").textContent="解挂成功，带上来一点杂物"; snagged=""; $("rodView").classList.remove("bent","lifted");} if(snagged==="grass"&&Math.random()<.06){$("state").textContent="水草抖掉了，可以继续收"; snagged=""; $("rodView").classList.remove("bent","lifted");} if(snagged==="bottom"&&Math.random()<.006){$("state").textContent="断了，这个饵不能用了"; markLureLost(); snagged=""; distance=0;} tryEvent(); if(distance<=0){castOn=false; updateFishingLureButtons(); spoolClosed=false; lureLanded=false; snagged=""; depth=0; $("line").classList.remove("out"); $("line").style.width="0"; $("currentLure").classList.remove("cast","flying"); $("currentLure").style.transform=""; $("go").textContent="GO"; $("go").classList.remove("small","reeling"); $("rodView").classList.remove("bent","lifted"); $("state").textContent="收回来了，可以重新 GO"; clearInterval(reelTimer); suppressNextClick=true; setTimeout(()=>{suppressNextClick=false;},250);} updateLabels(); }
     function resetFishing(){
       clearInterval(sinkTimer);
       clearInterval(reelTimer);
@@ -574,13 +574,19 @@
       const totalUp=dragStartY-e.clientY;
       const dragPower=Math.min(1.8,Math.hypot(dx,dy)/18);
       if(dragPower>.18){
-        distance=Math.max(0,distance-.35*dragPower);
-        if(!surface())depth=Math.max(0,depth-.035*dragPower);
+        if(!snagged)distance=Math.max(0,distance-.35*dragPower);
+        if(suspend())approachDepth(runningDepth(activeLure()), .035*dragPower);
+        else if(!surface())depth=Math.max(0,depth-.035*dragPower);
+        depth=Math.min(depth,maxDepthHere());
         updateLabels();
       }
       if(totalUp>26){
         $("rodView").classList.add("lifted");
-        if(!surface()){
+        if(suspend()){
+          approachDepth(Math.max(.15, suspendDepth(activeLure())-.25), .045);
+          depth=Math.min(depth,maxDepthHere());
+          updateLabels();
+        }else if(!surface()){
           depth=Math.max(0,depth-.12);
           updateLabels();
         }
@@ -598,7 +604,7 @@
       clearInterval(reelTimer);
     }
     ["pointerup","pointercancel","pointerleave"].forEach(ev=>$("go").addEventListener(ev,stopMouseReel));
-    window.addEventListener("deviceorientation",e=>{ if(!castOn||!e.beta)return; if(e.beta<25){$("rodView").classList.add("lifted"); if(!surface()){depth=Math.max(0,depth-.12); updateLabels();}} else $("rodView").classList.remove("lifted");});
+    window.addEventListener("deviceorientation",e=>{ if(!castOn||!e.beta)return; if(e.beta<25){$("rodView").classList.add("lifted"); if(suspend()){approachDepth(Math.max(.15,suspendDepth(activeLure())-.25),.045); depth=Math.min(depth,maxDepthHere()); updateLabels();}else if(!surface()){depth=Math.max(0,depth-.12); updateLabels();}} else $("rodView").classList.remove("lifted");});
   </script>
 </body>
 </html>
