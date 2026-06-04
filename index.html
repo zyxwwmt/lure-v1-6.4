@@ -107,7 +107,8 @@
     .rod-view { position: absolute; right: -18px; bottom: 75px; z-index: 5; width: 220px; height: 310px; transform-origin: 80% 92%; transition: transform .25s ease; }
     .rod-view.casting { animation: cast .8s ease; }
     .rod-view.lifted { transform: rotate(-12deg) translateY(-18px); }
-    .rod-view.bent .rod-art { transform: rotate(-7deg) skewX(-6deg); filter: drop-shadow(-10px -14px 0 rgba(36,93,98,.22)); }
+    .rod-view.bent { transform: rotate(-5deg) translateY(-8px); }
+    .rod-view.bent .rod-art { filter: drop-shadow(-10px -14px 0 rgba(36,93,98,.22)); }
     .rod-view.bent::before, .rod-view.bent::after { content: ""; position: absolute; right: 118px; top: 40px; width: 24px; height: 10px; border-top: 3px solid rgba(36,93,98,.55); border-radius: 50%; animation: shakeLine .35s ease-in-out infinite alternate; }
     .rod-view.bent::after { right: 142px; top: 68px; width: 18px; animation-delay: .12s; }
     .rod-art { position: absolute; right: 14px; bottom: 28px; width: 210px; height: 300px; overflow: visible; color: #245d62; transform-origin: 82% 94%; transition: transform .2s ease, filter .2s ease; filter: drop-shadow(0 4px 0 rgba(255,247,214,.55)); }
@@ -120,9 +121,10 @@
     .reel { position: absolute; right: 91px; bottom: 93px; width: 48px; height: 48px; border: 4px solid #245d62; border-radius: 50%; background: radial-gradient(circle, #fff7d6 0 31%, #9bd7cf 33% 45%, #fff7d6 47%); box-shadow: 0 4px 0 rgba(36,93,98,.16); }
     .reel::before { content: ""; position: absolute; right: -25px; top: 18px; width: 30px; height: 8px; border: 3px solid #245d62; border-left: 0; border-radius: 0 12px 12px 0; background: #fff7d6; transform: rotate(-12deg); }
     .reel::after { content: ""; position: absolute; right: -34px; top: 10px; width: 13px; height: 13px; border: 3px solid #245d62; border-radius: 50%; background: #f0a14a; }
-    .line { position: absolute; left: 35px; top: 22px; width: 0; height: 2px; background: rgba(255,255,255,.8); transform: rotate(0deg); transform-origin: left center; transition: width .12s linear, transform .12s linear; }
-    .current-lure { position: absolute; left: 16px; top: 3px; z-index: 6; width: 38px; height: 38px; color: #245d62; transition: transform .12s linear; }
-    .splash { position: absolute; left: 3px; top: 3px; z-index: 5; width: 64px; height: 28px; display: none; border-radius: 50%; border: 3px solid rgba(255,255,255,.74); border-left-color: transparent; border-right-color: transparent; transform: translateX(-190px) translateY(66px) scale(.82); pointer-events: none; }
+    .line { position: absolute; left: 35px; top: -5px; width: 0; height: 2px; background: rgba(255,255,255,.8); transform: rotate(0deg); transform-origin: left center; transition: width .12s linear, transform .12s linear; }
+    .line::before { content: ""; position: absolute; left: -3px; top: -3px; width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,.95); box-shadow: 0 0 0 1px rgba(36,93,98,.26); }
+    .current-lure { position: absolute; left: 16px; top: -24px; z-index: 6; width: 38px; height: 38px; color: #245d62; transition: transform .12s linear; }
+    .splash { position: absolute; left: 3px; top: -24px; z-index: 5; width: 64px; height: 28px; display: none; border-radius: 50%; border: 3px solid rgba(255,255,255,.74); border-left-color: transparent; border-right-color: transparent; transform: translateX(-190px) translateY(66px) scale(.82); pointer-events: none; }
     .splash.show { display: block; animation: splash .55s ease-out both; }
     .go { position: absolute; left: 50%; bottom: 28px; z-index: 7; width: 84px; height: 84px; border: 4px solid #4fa6aa; border-radius: 42px; background: #fff7d6; color: #245d62; box-shadow: 0 8px 0 #9bd7cf; font-size: 24px; font-weight: 900; transform: translateX(-50%); touch-action: none; }
     .go.small { font-size: 14px; }
